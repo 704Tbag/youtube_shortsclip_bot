@@ -8,6 +8,10 @@ A simple, free-to-run pipeline that, once a day:
 
 It runs on **GitHub Actions**, which is free for this kind of light daily job and needs no server of your own.
 
+## Development Setup
+
+This repository uses **GitHub Codespaces** for streamlined development. A pre-configured environment is available with Python 3.11, all dependencies, and development tools.
+
 ## What you need before starting
 
 - A GitHub account (free)
@@ -53,9 +57,9 @@ Add these as GitHub secrets for better quality (but not required):
 ## Things worth knowing
 
 - **Quota**: each upload uses about 1,600 of YouTube's 10,000 daily API quota units — one video a day is nowhere near the limit.
-- **Copyright**: poems are generated fresh (template or Claude), never copied from existing published poems. The background music is a synthesized tone, not a sampled/copyrighted track. Football content is a stats/scores summary, not real match footage or player likenesses — uploading actual broadcast clips or depicting real players visually would risk takedowns/strikes.
-- **Voice quality**: the default uses gTTS (free, no key, slightly robotic). For a more natural voice, swap `tts_generator.py` to call ElevenLabs or Google Cloud Text-to-Speech — `main.py` doesn't need to change, since it just calls `generate_narration(text) -> mp3_path`.
-- **Visual style**: currently a simple gradient background with fading-in text lines — intentionally simple so it runs reliably in CI without heavy GPU/AI video generation. If you want richer animation later, swap out `video_builder.py` similarly.
+- **Copyright**: poems are generated fresh (template or Claude), never copied from existing published poems. The background music is a synthesized tone, not a sampled/copyrighted track. Football content is sourced from public APIs.
+- **Voice quality**: the default uses gTTS (free, no key, slightly robotic). For a more natural voice, swap `tts_generator.py` to call ElevenLabs or Google Cloud Text-to-Speech.
+- **Visual style**: currently a simple gradient background with fading-in text lines — intentionally simple so it runs reliably in CI without heavy GPU/AI video generation.
 - **Costs**: as configured (gTTS + template poems + free sports API), this runs at $0/day. The only optional cost is `ANTHROPIC_API_KEY` usage if you turn that on.
 
 ## File overview
@@ -68,4 +72,5 @@ youtube_uploader.py     - uploads the mp4 to your channel
 get_refresh_token.py    - one-time local script to get OAuth credentials
 requirements.txt        - Python dependencies
 .github/workflows/      - the daily schedule definition
+.devcontainer/          - Codespaces configuration
 ```
