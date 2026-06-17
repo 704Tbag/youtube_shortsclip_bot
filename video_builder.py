@@ -11,8 +11,10 @@ with the visuals or the background audio.
 """
 
 import numpy as np
+import tempfile
+import soundfile as sf
 from PIL import Image, ImageDraw, ImageFont
-from moviepy.editor import ImageSequenceClip, AudioFileClip, CompositeAudioClip, AudioArrayClip
+from moviepy.editor import ImageSequenceClip, AudioFileClip, CompositeAudioClip
 
 WIDTH, HEIGHT = 1080, 1920
 FPS = 24
@@ -108,8 +110,12 @@ def build_video(script_text: str, narration_path: str, content_type: str, output
 
     video_clip = ImageSequenceClip(frames, fps=FPS)
 
+    # Generate tone bed and save to temporary file
     tone_array, sample_rate = _generate_tone_bed(duration)
-    tone_clip = AudioArrayClip(tone_array, fps=sample_rate)
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        sf.write(tmp.name, tone_array, sample_rate)
+        tone_clip = AudioFileClip(tmp.name)
+    
     final_audio = CompositeAudioClip([tone_clip, narration.set_start(0)])
 
     final_clip = video_clip.set_audio(final_audio).set_duration(duration)
