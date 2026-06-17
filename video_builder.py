@@ -12,7 +12,8 @@ with the visuals or the background audio.
 
 import numpy as np
 import tempfile
-import soundfile as sf
+import os
+from scipy.io import wavfile
 from PIL import Image, ImageDraw, ImageFont
 from moviepy.editor import ImageSequenceClip, AudioFileClip, CompositeAudioClip
 
@@ -112,14 +113,24 @@ def build_video(script_text: str, narration_path: str, content_type: str, output
 
     # Generate tone bed and save to temporary file
     tone_array, sample_rate = _generate_tone_bed(duration)
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-        sf.write(tmp.name, tone_array, sample_rate)
-        tone_clip = AudioFileClip(tmp.name)
-    
-    final_audio = CompositeAudioClip([tone_clip, narration.set_start(0)])
+    tmp_file = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            tmp_file = tmp.name
+            # Convert float audio to int16 for WAV file
+            audio_int16 = (tone_array * 32767).astype(np.int16)
+            wavfile.write(tmp_file, sample_rate, audio_int16)
+            tone_clip = AudioFileClip(tmp_file)
+        
+        final_audio = CompositeAudioClip([tone_clip, narration.set_start(0)])
 
-    final_clip = video_clip.set_audio(final_audio).set_duration(duration)
-    final_clip.write_videofile(output_path, fps=FPS, codec="libx264", audio_codec="aac", verbose=False, logger=None)
+        final_clip = video_clip.set_audio(final_audio).set_duration(duration)
+        final_clip.write_videofile(output_path, fps=FPS, codec="libx264", audio_codec="aac", verbose=False, logger=None)
+    finally:
+        # Clean up temporary file
+        if tmp_file and os.path.exists(tmp_file):
+            os.remove(tmp_file)
+    
     return output_path
 
 
