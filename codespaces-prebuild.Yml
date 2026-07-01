@@ -1,0 +1,51 @@
+  - name: Ensure script is executable
+    run: |
+      if [ -f .github/scripts/upload_prebuild_template.sh ]; then
+        chmod +x .github/scripts/upload_prebuild_template.sh
+      fi
+
+  - name: Upload prebuild template (with retries)
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CODESPACES_PAT: ${{ secrets.CODESPACES_PAT }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+    run: |
+      set -euo pipefail
+      max_attempts=4
+      attempt=0
+
+      upload_cmd() {
+        if [ -x .github/scripts/upload_prebuild_template.sh ]; then
+          ./.github/scripts/upload_prebuild_template.sh
+        else
+          echo "Upload script not found or not executable"
+          return 2
+        fi
+      }
+
+      until [ $attempt -ge $max_attempts ]; do
+        attempt=$((attempt+1))
+        echo "Upload attempt $attempt/$max_attempts"
+        if upload_cmd; then
+          echo "Upload succeeded"
+          exit 0
+        fi
+        echo "Upload failed — sleeping $((attempt * 15))s before retry"
+        sleep $((attempt * 15))
+      done
+
+      echo "Upload failed after $max_attempts attempts"
+      exit 1
+
+  - name: Dump environment for debug
+    if: failure()
+    run: env | sort
+
+  - name: Upload prebuild agent logs on failure
+    if: failure()
+    uses: actions/upload-artifact@v4
+    with:
+      name: prebuild-agent-logs
+      path: |
+        /tmp/prebuild-agent-logs/
+        ./.devcontainer/logs/
